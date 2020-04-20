@@ -1,5 +1,5 @@
 <?php
-include 'Stack.php';
+
 ?>
 <!doctype html>
 <html>
@@ -16,33 +16,68 @@ include 'Stack.php';
     <input type="submit" value="Check">
 </form>
 <?php
-$calculation = $_POST['calculation'];
-$stack = new Stack(100);
-$checkParenthesis = 0;
+const CIRCLE_BRACKET = 1;
+const SQUARE_BRACKET = 2;
+const HOOK_BRACKET = 3;
+const FIRST_ELEMENT_COMPARE = 4;
 try {
-    for ($i = 0; $i < strlen($calculation); $i++) {
-        if ($calculation[$i] == '(' || $calculation[$i] == ')') {
-            $stack->push($calculation[$i]);
+    function checkBracket()
+    {
+        $calculation = $_POST['calculation'];
+        $stack = new SplStack();
+        $stack->push(FIRST_ELEMENT_COMPARE);
+        $arraySquareBracketInHookBracket = [];
+        $arrayCircleBracketInSquareBracket = [];
+        for ($i = 0; $i < strlen($calculation); $i++) {
+            switch ($calculation[$i]) {
+                case '(':
+                    if (CIRCLE_BRACKET < $stack->top()) {
+                        $stack->push(CIRCLE_BRACKET);
+                        array_push($arrayCircleBracketInSquareBracket, CIRCLE_BRACKET);
+                    }
+                    break;
+                case ')':
+                    if ($stack->pop() != CIRCLE_BRACKET) {
+                        return false;
+                    }
+                    break;
+                case '[':
+                    if (SQUARE_BRACKET < $stack->top()) {
+                        $stack->push(SQUARE_BRACKET);
+                        array_push($arraySquareBracketInHookBracket, SQUARE_BRACKET);
+                    }
+                    break;
+                case ']':
+                    if ($stack->pop() != SQUARE_BRACKET || empty($arrayCircleBracketInSquareBracket)) {
+                        return false;
+                    } else {
+                        $arrayCircleBracketInSquareBracket = [];
+                        break;
+                    }
+                case '{':
+                    if (HOOK_BRACKET < $stack->top()) {
+                        $stack->push(HOOK_BRACKET);
+                    }
+                    break;
+                case '}':
+                    if ($stack->pop() != HOOK_BRACKET || empty($arraySquareBracketInHookBracket)) {
+                        return false;
+                    } else {
+                        $arraySquareBracketInHookBracket = [];
+                    }
+            }
+        }
+        if ($stack->count() != 1) {
+            return false;
+        } else {
+            return true;
         }
     }
 
-    $countParenthesis = count($stack->getStack());
-    for ($i = 0; $i < $countParenthesis; $i++) {
-        $parenthesis = $stack->pop();
-        if ($parenthesis == ')') {
-            $checkParenthesis += 1;
-        }
-        if ($parenthesis == '(') {
-            $checkParenthesis -= 1;
-        }
-        if ($checkParenthesis < 0) {
-            break;
-        }
-    }
-    if ($checkParenthesis == 0) {
-        echo 'Yes!';
+    if (checkBracket()) {
+        echo 'Ok';
     } else {
-        echo 'No!';
+        echo 'Error';
     }
 } catch (Exception $exception) {
     echo $exception->getMessage();
